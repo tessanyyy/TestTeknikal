@@ -1,24 +1,21 @@
-package testteknikal.stepdefinitions;
-
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
+import io.cucumber.java.en.*;
+import static org.junit.Assert.*;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-
 public class BookingStepDefinitions {
+
     private WebDriver driver;
     private List<Map<String, String>> bookings;
     private List<Map<String, String>> schedule;
-    private List<String> issues;
+    private boolean bookingSuccessful;
 
     @Given("^I have opened the booking website$")
     public void i_have_opened_the_booking_website() {
@@ -38,36 +35,51 @@ public class BookingStepDefinitions {
         schedule = scheduleData;
     }
 
-    @When("^the bookings are validated$")
-    public void the_bookings_are_validated() {
-        for (Map<String, String> booking : bookings) {
-            WebElement bookingElement = driver.findElement(By.id("booking-" + booking.get("Booking_id")));
-            bookingElement.click();
-
-            WebElement dateElement = driver.findElement(By.id("date"));
-            String date = dateElement.getText();
-
-            WebElement startTimeElement = driver.findElement(By.id("start-time"));
-            String startTime = startTimeElement.getText();
-
-            WebElement priceElement = driver.findElement(By.id("price"));
-            String price = priceElement.getText();
-
-            for (Map<String, String> slot : schedule) {
-                if (date.equals(slot.get("date")) && startTime.equals(slot.get("start_time"))) {
-                    if (!price.equals(slot.get("price"))) {
-                        issues.add(booking.get("Booking_id"));
-                    }
-                    issues.add(booking.get("Booking_id"));
-                    break;
-                }
+    @When("^I try to book a slot$")
+    public void i_try_to_book_a_slot() {
+        for (Map<String, String> slot : schedule) {
+            if (isSlotAvailable(slot)) {
+                bookSlot(slot);
+                bookingSuccessful = true;
+                break;
             }
         }
     }
 
-    @Then("^the following booking issues are detected:$")
-    public void the_following_booking_issues_are_detected(List<String> expectedIssues) {
-        assertEquals(expectedIssues, issues);
-        driver.quit();
+    @Then("^I should (not )?receive a confirmation$")
+    public void i_should_receive_a_confirmation(String negation) {
+        WebElement confirmationElement = null;
+        try {
+            confirmationElement = driver.findElement(By.id("confirmation-message"));
+        } catch (Exception e) {
+            // Confirmation element not found
+        }
+
+        if (negation == null) {
+            assertNotNull("Confirmation message should be displayed", confirmationElement);
+        } else {
+            assertNull("Confirmation message should not be displayed", confirmationElement);
+        }
+
+        if (bookingSuccessful) {
+            driver.quit();
+        }
+    }
+
+    private boolean isSlotAvailable(Map<String, String> slot) {
+        for (Map<String, String> booking : bookings) {
+            if (booking.get("date").equals(slot.get("date")) &&
+                    booking.get("start_time").equals(slot.get("start_time"))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void bookSlot(Map<String, String> slot) {
+        WebElement slotElement = driver.findElement(By.id("slot-" + slot.get("id")));
+        slotElement.click();
+        WebElement bookButton = driver.findElement(By.id("book-button"));
+        bookButton.click();
     }
 }

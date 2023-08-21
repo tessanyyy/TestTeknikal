@@ -7,6 +7,10 @@ import com.testdms.drivers.DriverSingleton;
 import com.testdms.utils.Constants;
 import com.testdms.utils.TestScenarios;
 import com.testdms.utils.Utils;
+import com.testteknikal.drivers.DriverSingleton;
+import com.testteknikal.utils.Constants;
+import com.testteknikal.utils.TestScenarios;
+import com.testteknikal.utils.Utils;
 import io.cucumber.java.*;
 import org.openqa.selenium.WebDriver;
 
